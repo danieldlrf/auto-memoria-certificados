@@ -44,25 +44,3 @@ class Student:
     def full_name_v2(self):
         return self.lastname + ", " + self.name
     
-    def dict_transform(self):
-        return {
-            "dni": self.dni,
-            "name": self.name,
-            "lastname": self.lastname,
-            "full_name_v1": self.full_name_v1(),
-            "full_name_v2": self.full_name_v2(),
-            "corp": self.corp,
-            "movil": self.movil,
-            "phone": self.phone,
-            "mail": self.mail,
-            "job": self.job,
-            "student_type": self.student_type,
-            "state": self.state,
-            "ev1": self.ev1,
-            "ev2": self.ev2,
-            "ev3": self.ev3,
-            "ev4": self.ev4,
-            "evf": self.evf,
-            "time": self.time,
-            "firstconection": self.firstconection
-        }
