@@ -7,7 +7,7 @@ class Student:
         lastname: str = "",
         corp: str = "",
         movil: str = "",
-        phone: str = "",
+        phone: Optional[str] = None,
         mail: str = "",
         job: str = "",
         student_type: str = "",
