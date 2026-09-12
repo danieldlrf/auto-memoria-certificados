@@ -64,7 +64,7 @@ def build_certificate_context(students_by_dni: Dict[str, Student]) -> Dict[str, 
     return {"students": build_student_list(students_by_dni)}
 
 
-def build_memoria_context(students_by_dni: Dict[str, Student]) -> Dict[str, Any]:
+def build_memory_context(students_by_dni: Dict[str, Student]) -> Dict[str, Any]:
     """
     Contexto para la memoria: la misma lista de alumnos, reutilizada
     en las tres tablas de la plantilla bajo la clave 'students'.
