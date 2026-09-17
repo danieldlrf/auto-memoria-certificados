@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from pathlib import Path
+import traceback
 
 from data_access import file_ingest, repo
 from data_access.spreadsheets_reader import load_all
@@ -59,6 +60,7 @@ class MainScreen:
         try:
             file_ingest.ingest_spreadsheet(Path(ruta_original), tipo)
         except Exception as e:
+            print(traceback.format_exc()) 
             messagebox.showerror("Error al cargar el archivo", str(e))
             return
 
@@ -98,6 +100,7 @@ class MainScreen:
                 f"Documentos generados:\n{cert_path}\n{mem_path}",
             )
         except Exception as e:
+            print(traceback.format_exc()) 
             messagebox.showerror("Error durante la generación", str(e))
 
     def _on_nuevo_curso(self) -> None:

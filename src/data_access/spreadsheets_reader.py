@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict
 from models.student import Student
-
+import unicodedata
 
 def normalize_dni(raw_dni: str) -> str:
     """
@@ -28,33 +28,51 @@ def read_students_csv(csv_path: Path) -> Dict[str, Student]:
     file = pd.read_csv(csv_path, sep=";")
     res = {}
     for idx, row in file.iterrows(): 
-        res[normalize_dni(row["DNI"])] = Student(
-                                            dni=normalize_dni(row["DNI"]),
-                                            name=row["Nombre"].split(",")[1].strip(),
-                                            lastname=row["Nombre"].split(",")[0].strip(),
-                                            corp=row["Corporación"],
-                                            movil=row["Teléfono móvil"],
-                                            phone=row["Teléfono fijo"],
-                                            mail=row["Email"],
-                                            job=row["Datoscargo"],
-                                            student_type=row["Tipo"],
-                                            state=row["Cód. estado"],
+        res[normalize_dni(str(row["DNI"]))] = Student(
+                                            dni=normalize_dni(str(row["DNI"])),
+                                            name=str(row["Nombre"]).split(",")[1].strip(),
+                                            lastname=str(row["Nombre"]).split(",")[0].strip(),
+                                            corp=str(row["Corporación"]),
+                                            movil=str(row["Teléfono móvil"]),
+                                            phone=str(row["Teléfono fijo"]),
+                                            mail=str(row["Email"]),
+                                            job=str(row["Datoscargo"]),
+                                            student_type=str(row["Tipo"]),
+                                            state=str(row["Cód. estado"]),
                                         )
     return res
 
+def _build_name_index(students_by_dni: Dict[str, Student]) -> Dict[str, Student]:
+    """
+    Índice secundario: nombre normalizado -> Student. Solo para los
+    CSV que no traen DNI (como el de horas). No sustituye al
+    diccionario indexado por DNI, lo complementa.
+    """
+    return {_normalize_name_key(s.full_name_v1())
+            : s for s in students_by_dni.values()}
+    
+def _normalize_name_key(nombre: str) -> str:
+    return unicodedata.normalize('NFKD', nombre.lower().replace(" ", "")).encode('ascii', 'ignore').decode('ascii')
 
 def read_notes_csv(csv_path: Path, students_by_DNI: Dict[str, Student]) -> None:
     """
     Lee el CSV de notas y ACTUALIZA los Student que ya existen en
-    alumnos_por_dni (ev1, ev2, ev3, ev4, evf).
+    alumnos_por_dni (ev1, ev2, ev3, evf).
 
     No devuelve nada porque muta el diccionario que recibe. Decide
     aquí qué hacer si un DNI del CSV de notas no está en el
     diccionario: ¿lo ignoras con un aviso, o lo consideras un error
     y paras la ejecución?
     """
-    # TODO: implementar cuando tenga el CSV real de notas
-    return students_by_DNI
+    students_by_name = _build_name_index(students_by_DNI)
+    file = pd.read_csv(csv_path, sep=";")
+    for idx, row in file.iterrows(): 
+        student = students_by_name[_normalize_name_key(str(row["Nombre"]) + " " + str(row["Apellido(s)"]))] 
+        student.ev1 = _parse_grade(str(row["Cuestionario:TEST BLOQUE I (Real)"]))
+        student.ev2 = _parse_grade(str(row["Cuestionario:TEST BLOQUE I (Real)"]))
+        student.evf = _parse_grade(str(row["Cuestionario:TEST FINAL (Real)"]))
+        
+        
 
 
 def read_time_csv(csv_path: Path, students_by_DNI: Dict[str, Student]) -> None:
@@ -62,8 +80,11 @@ def read_time_csv(csv_path: Path, students_by_DNI: Dict[str, Student]) -> None:
     Igual que read_notes_csv pero para tiempo de conexión y
     firstconection. Mismo dilema del DNI huérfano que arriba.
     """
-    # TODO: implementar cuando tenga el CSV real de horas
-    return students_by_DNI
+    students_by_name = _build_name_index(students_by_DNI)
+    file = pd.read_csv(csv_path, sep=";")
+    for idx, row in file.iterrows(): 
+        student = students_by_name[_normalize_name_key(str(row["Nombre completo con imagen y enlace"])[2:])] 
+        student.time = str(row["Duración"])
 
 
 def _parse_grade(raw_value) -> float | None:
@@ -72,7 +93,21 @@ def _parse_grade(raw_value) -> float | None:
     está vacío/no es válido. Aísla aquí el problema del separador
     decimal (coma vs punto) para no repetirlo en read_notes_csv.
     """
-    pass
+    if raw_value is None or pd.isna(raw_value):
+        return None
+
+    if isinstance(raw_value, (int, float)):
+        return float(raw_value)
+
+    texto = str(raw_value).strip().replace(",", ".")
+
+    if texto == "":
+        return None
+
+    try:
+        return float(texto)
+    except ValueError:
+        return None
 
 
 def load_all(students_csv: Path, notes_csv: Path, time_csv: Path) -> Dict[str, Student]:

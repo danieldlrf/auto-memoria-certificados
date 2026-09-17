@@ -14,13 +14,13 @@ def ingest_spreadsheet(origin_path:Path, type_csv: str ) -> Path :
     
     path = Path("data") / "spreadsheets" / DESTINATION_NAME[type_csv]
     row_search_header = pd.read_excel(origin_path, header=None, nrows=15)
-    key_words = ["nombre", "dni", "email"]
+    key_words = ["nombre"]
     
     idx_header = 0
     find = False
     for idx, row in row_search_header.iterrows():
-        values = set(row.astype(str).str.strip().str.lower())
-        if values.intersection(key_words):
+        values = {str(v).strip().lower() for v in row.tolist()}
+        if any(keyword in valor for valor in values for keyword in key_words):
             idx_header = idx
             find = True
             break

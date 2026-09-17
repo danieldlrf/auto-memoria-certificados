@@ -16,7 +16,6 @@ class Student:
         ev1: Optional[float] = None,
         ev2: Optional[float] = None,
         ev3: Optional[float] = None,
-        ev4: Optional[float] = None,
         evf: Optional[float] = None,
         time: Optional[float] = None,
         firstconection: Optional[str] = None
@@ -34,7 +33,6 @@ class Student:
         self.ev1 = ev1
         self.ev2 = ev2
         self.ev3 = ev3
-        self.ev4 = ev4
         self.evf = evf
         self.time = time
         self.firstconection = firstconection
