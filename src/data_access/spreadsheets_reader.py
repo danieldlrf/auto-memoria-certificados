@@ -28,17 +28,20 @@ def read_students_csv(csv_path: Path) -> Dict[str, Student]:
     file = pd.read_csv(csv_path, sep=";")
     res = {}
     for idx, row in file.iterrows(): 
-        res[normalize_dni(str(row["DNI"]))] = Student(
-                                            dni=normalize_dni(str(row["DNI"])),
-                                            name=str(row["Nombre"]).split(",")[1].strip(),
-                                            lastname=str(row["Nombre"]).split(",")[0].strip(),
-                                            corp=str(row["Corporación"]),
-                                            movil=str(row["Teléfono móvil"]),
-                                            phone=str(row["Teléfono fijo"]),
-                                            mail=str(row["Email"]),
-                                            job=str(row["Datoscargo"]),
-                                            student_type=str(row["Tipo"]),
-                                            state=str(row["Cód. estado"]),
+        dni_raw = str(row["dni"]).strip()
+        if not dni_raw or dni_raw.lower() == "nan" or not any(c.isdigit() for c in dni_raw):
+            continue
+        res[normalize_dni(str(row["dni"]))] = Student(
+                                            dni=normalize_dni(str(row["dni"])),
+                                            name=str(row["nombre"]).split(",")[1].strip(),
+                                            lastname=str(row["nombre"]).split(",")[0].strip(),
+                                            corp=str(row["corporación"]),
+                                            movil=str(row["teléfono móvil"]),
+                                            phone=str(row["teléfono fijo"]),
+                                            mail=str(row["email"]),
+                                            job=str(row["datoscargo"]),
+                                            student_type=str(row["tipo"]),
+                                            state=str(row["cód. estado"]),
                                         )
     return res
 
@@ -48,7 +51,7 @@ def _build_name_index(students_by_dni: Dict[str, Student]) -> Dict[str, Student]
     CSV que no traen DNI (como el de horas). No sustituye al
     diccionario indexado por DNI, lo complementa.
     """
-    return {_normalize_name_key(s.full_name_v1())
+    return {_normalize_name_key(s.full_name_v1)
             : s for s in students_by_dni.values()}
     
 def _normalize_name_key(nombre: str) -> str:
@@ -67,10 +70,10 @@ def read_notes_csv(csv_path: Path, students_by_DNI: Dict[str, Student]) -> None:
     students_by_name = _build_name_index(students_by_DNI)
     file = pd.read_csv(csv_path, sep=";")
     for idx, row in file.iterrows(): 
-        student = students_by_name[_normalize_name_key(str(row["Nombre"]) + " " + str(row["Apellido(s)"]))] 
-        student.ev1 = _parse_grade(str(row["Cuestionario:TEST BLOQUE I (Real)"]))
-        student.ev2 = _parse_grade(str(row["Cuestionario:TEST BLOQUE I (Real)"]))
-        student.evf = _parse_grade(str(row["Cuestionario:TEST FINAL (Real)"]))
+        student = students_by_name[_normalize_name_key(str(row["nombre"]) + " " + str(row["apellido(s)"]))] 
+        student.ev1 = _parse_grade(str(row["cuestionario:test bloque i (real)"]))
+        student.ev2 = _parse_grade(str(row["cuestionario:test bloque ii (real)"]))
+        student.evf = _parse_grade(str(row["cuestionario:test final (real)"]))
         
         
 
@@ -83,8 +86,11 @@ def read_time_csv(csv_path: Path, students_by_DNI: Dict[str, Student]) -> None:
     students_by_name = _build_name_index(students_by_DNI)
     file = pd.read_csv(csv_path, sep=";")
     for idx, row in file.iterrows(): 
-        student = students_by_name[_normalize_name_key(str(row["Nombre completo con imagen y enlace"])[2:])] 
-        student.time = str(row["Duración"])
+        key = _normalize_name_key(str(row["nombre completo con imagen y enlace"])[2:])
+        if key in students_by_name:
+            student = students_by_name[key] 
+            student.time = str(row["duración"])
+            student.firstconection = " "
 
 
 def _parse_grade(raw_value) -> float | None:
@@ -118,5 +124,6 @@ def load_all(students_csv: Path, notes_csv: Path, time_csv: Path) -> Dict[str, S
     tres funciones sueltas por separado.
     """
     students_by_DNI = read_students_csv(students_csv)
-    students_by_DNI_notes = read_notes_csv(notes_csv, students_by_DNI)
-    return read_time_csv(time_csv, students_by_DNI_notes)
+    read_notes_csv(notes_csv, students_by_DNI)
+    read_time_csv(time_csv, students_by_DNI)
+    return students_by_DNI

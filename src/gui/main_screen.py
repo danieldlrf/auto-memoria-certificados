@@ -8,10 +8,8 @@ from data_access.spreadsheets_reader import load_all
 from docs.cert_generator import generate_certificate
 from docs.mem_generator import generate_memory
 
-
 TEMPLATE_CERT_PATH = Path("data/templates/certif.docx")
 TEMPLATE_MEM_PATH = Path("data/templates/memory.docx")
-OUTPUT_DIR = Path("data/output")
 
 EXCEL_TYPES = {
     "students": "Selección de alumnado",
@@ -55,7 +53,7 @@ class MainScreen:
             filetypes=[("Excel files", "*.xlsx *.xls")],
         )
         if not ruta_original:
-            return  # el usuario canceló el diálogo, no hacemos nada
+            return  # el usuario canceló el diálogo
 
         try:
             file_ingest.ingest_spreadsheet(Path(ruta_original), tipo)
@@ -79,6 +77,26 @@ class MainScreen:
             )
             return
 
+        # Pedir ruta para el certificado
+        cert_dest = filedialog.asksaveasfilename(
+            title="Guardar certificado como...",
+            initialfile="certificado_generado.docx",
+            defaultextension=".docx",
+            filetypes=[("Documentos de Word", "*.docx")],
+        )
+        if not cert_dest:
+            return  # El usuario canceló la selección
+
+        # Pedir ruta para la memoria
+        mem_dest = filedialog.asksaveasfilename(
+            title="Guardar memoria como...",
+            initialfile="memoria_generada.docx",
+            defaultextension=".docx",
+            filetypes=[("Documentos de Word", "*.docx")],
+        )
+        if not mem_dest:
+            return  # El usuario canceló la selección
+
         try:
             students_csv = Path("data/spreadsheets/students.csv")
             notes_csv = Path("data/spreadsheets/notes.csv")
@@ -87,17 +105,16 @@ class MainScreen:
             students_by_dni = load_all(students_csv, notes_csv, time_csv)
             repo.set_students(students_by_dni)
 
-            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
             cert_path = generate_certificate(
-                TEMPLATE_CERT_PATH, repo.get_students(), OUTPUT_DIR / "certificado_generado.docx"
+                TEMPLATE_CERT_PATH, repo.get_students(), Path(cert_dest)
             )
             mem_path = generate_memory(
-                TEMPLATE_MEM_PATH, repo.get_students(), OUTPUT_DIR / "memoria_generada.docx"
+                TEMPLATE_MEM_PATH, repo.get_students(), Path(mem_dest)
             )
 
             messagebox.showinfo(
                 "Proceso completado",
-                f"Documentos generados:\n{cert_path}\n{mem_path}",
+                f"Documentos generados con éxito:\n\n• {cert_path}\n• {mem_path}",
             )
         except Exception as e:
             print(traceback.format_exc()) 

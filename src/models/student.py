@@ -15,7 +15,6 @@ class Student:
         state: str = "",
         ev1: Optional[float] = None,
         ev2: Optional[float] = None,
-        ev3: Optional[float] = None,
         evf: Optional[float] = None,
         time: Optional[float] = None,
         firstconection: Optional[str] = None
@@ -32,14 +31,13 @@ class Student:
         self.state = state
         self.ev1 = ev1
         self.ev2 = ev2
-        self.ev3 = ev3
         self.evf = evf
         self.time = time
         self.firstconection = firstconection
-        
+    @property
     def full_name_v1(self):
         return self.name + " " + self.lastname
-    
+    @property
     def full_name_v2(self):
         return self.lastname + ", " + self.name
     

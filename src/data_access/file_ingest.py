@@ -27,5 +27,6 @@ def ingest_spreadsheet(origin_path:Path, type_csv: str ) -> Path :
     if find is False:
         raise ValueError(f"Header no encontrado en el csv {origin_path}")
     file = pd.read_excel(origin_path, header=idx_header)
+    file.columns = file.columns.str.lower()
     file.to_csv(Path(path), index=False, encoding="utf-8", sep=';')
     return Path(path)
