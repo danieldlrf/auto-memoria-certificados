@@ -27,7 +27,7 @@ def generate_certificate(template_path: Path, students_by_dni: Dict[str, Student
                 evf_val = 0.0
 
             # Filtrar alumnos no aptos
-            if evf_val < 5.0:
+            if evf_val < 6.0:
                 continue
 
             row_cells = table.add_row().cells
